@@ -27,11 +27,11 @@ pytest master_tests/eeprom_extension_tests.py --log-level=DEBUG --durations=2 --
 echo "Running users tests"
 #pytest gateway_tests/users_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayUsersTest.xml
 
-echo "Running scheduling tests"
-pytest gateway_tests/scheduling_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewaySchedulingTest.xml
+#echo "Running scheduling tests"
+#pytest gateway_tests/scheduling_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewaySchedulingTest.xml
 
-echo "Running shutter tests"
-pytest gateway_tests/shutter_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayShutterTest.xml
+#echo "Running shutter tests"
+#pytest gateway_tests/shutter_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayShutterTest.xml
 
 echo "Running power controller tests"
 pytest power_tests/power_controller_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/PowerControllerTest.xml
@@ -42,8 +42,8 @@ echo "Running power communicator tests"
 echo "Running time keeper tests"
 pytest power_tests/time_keeper_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/PowerTimeKeeperTest.xml
 
-echo "Running plugin base tests"
-pytest plugins_tests/base_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/PluginsBaseTest.xml
+#echo "Running plugin base tests"
+#pytest plugins_tests/base_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/PluginsBaseTest.xml
 
 echo "Running plugin interfaces tests"
 pytest plugins_tests/interfaces_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/PluginsInterfacesTest.xml
