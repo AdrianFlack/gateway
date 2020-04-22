@@ -64,7 +64,7 @@ echo "Running Core uCAN tests"
 #python3 master_core_tests/ucan_communicator_tests.py
 
 echo "Running Core memory file tests"
-pytest master_core_tests/memory_file_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/MasterCoreMemoryFileTest.xml
+pytest master_core_tests/memory_file_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/MasterCoreMemoryFileTest.xml
 
 echo "Running Core api field tests"
 #python3 master_core_tests/api_field_tests.py
@@ -73,4 +73,4 @@ echo "running Core communicator tests"
 pytest master_core_tests/core_communicator_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/MasterCoreCommunicator.xml
 
 echo "Running metrics tests"
-pytest gateway_tests/metrics_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayMetricsTest.xml
+pytest gateway_tests/metrics_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayMetricsTest.xml
