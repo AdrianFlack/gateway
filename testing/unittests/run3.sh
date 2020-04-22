@@ -52,19 +52,19 @@ echo "Running pulse counter controller tests"
 #python3 gateway_tests/pulses_tests.py
 
 echo "Running classic controller tests"
-python3 gateway/hal/master_controller_classic_test.py
+pytest gateway/hal/master_controller_classic_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayClassicControllerTest.xml
 
 echo "Running core controller tests"
-python3 gateway/hal/master_controller_core_test.py
+pytest gateway/hal/master_controller_core_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayClassicCoreTest.xml
 
 echo "Running observer tests"
-python3 gateway/observer_test.py
+pytest gateway/observer_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayObserverTest.xml
 
 echo "Running Core uCAN tests"
 #python3 master_core_tests/ucan_communicator_tests.py
 
 echo "Running Core memory file tests"
-python3 master_core_tests/memory_file_tests.py
+pytest master_core_tests/memory_file_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/MasterCoreMemoryFileTest.xml
 
 echo "Running Core api field tests"
 #python3 master_core_tests/api_field_tests.py
@@ -73,4 +73,4 @@ echo "running Core communicator tests"
 pytest master_core_tests/core_communicator_tests.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/MasterCoreCommunicator.xml
 
 echo "Running metrics tests"
-python3 gateway_tests/metrics_tests.py
+pytest gateway_tests/metrics_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayMetricsTest.xml
