@@ -93,10 +93,11 @@ class UserController(object):
 
     @staticmethod
     def _hash(password):
+        # type: (str) -> str
         """ Hash the password using sha1. """
         sha = hashlib.sha1()
-        sha.update("OpenMotics")
-        sha.update(password)
+        sha.update("OpenMotics".encode('utf-8'))
+        sha.update(password.encode('utf-8'))
         return sha.hexdigest()
 
     def create_user(self, username, password, role, enabled, accept_terms=False):
@@ -197,7 +198,7 @@ class UserController(object):
         self._tokens[ret] = (username, valid_until)
 
         # Delete the expired tokens
-        for token in self._tokens.keys():
+        for token in list(self._tokens):
             if self._tokens[token][1] < time.time():
                 self._tokens.pop(token, None)
 

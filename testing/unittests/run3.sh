@@ -26,8 +26,8 @@ pytest master_tests/eeprom_controller_test.py --log-level=DEBUG --durations=2 --
 echo "Running eeprom extension tests"
 pytest master_tests/eeprom_extension_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/MasterEEPROMExtensionTest.xml
 
-#echo "Running users tests"
-#pytest gateway_tests/users_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayUsersTest.xml
+echo "Running users tests"
+pytest gateway_tests/users_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayUsersTest.xml
 
 #echo "Running scheduling tests"
 #pytest gateway_tests/scheduling_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewaySchedulingTest.xml
