@@ -53,8 +53,8 @@ pytest plugins_tests/interfaces_test.py --log-level=DEBUG --durations=2 --junit-
 #echo "Running pulse counter controller tests"
 #python3 gateway_tests/pulses_test.py
 
-#echo "Running classic controller tests"
-#python3 gateway/hal/master_controller_classic_test.py
+echo "Running classic controller tests"
+pytest gateway/hal/master_controller_classic_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayHalClassicController.xml
 
 #echo "Running core controller tests"
 #python3 gateway/hal/master_controller_core_test.py

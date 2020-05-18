@@ -91,7 +91,7 @@ class MasterClassicControllerTest(unittest.TestCase):
                                return_value=None) as consumer:
             controller = get_classic_controller_dummy()
             controller._register_version_depending_background_consumers()
-            expected_call = mock.call(master.classic.master_api.input_list(None), 0, mock.ANY)
+            expected_call = mock.call(master.classic.master_api.input_list(()), 0, mock.ANY)
             self.assertIn(expected_call, consumer.call_args_list)
 
     def test_subscribe_input_events(self):
