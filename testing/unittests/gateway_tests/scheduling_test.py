@@ -190,12 +190,11 @@ class SchedulingControllerTest(unittest.TestCase):
         with self.assertRaises(RuntimeError) as ctx:
             # Not a valid call
             controller.add_schedule('local_api', start + 120, 'LOCAL_API', {'name': 'foo', 'parameters': {}}, None, None, None)
-        self.assertEqual(ctx.exception.message, 'The arguments of a LOCAL_API schedule must specify a valid and (plugin_)exposed call')
-        with self.assertRaises(Exception) as ctx:
+        self.assertEqual(str(ctx.exception), 'The arguments of a LOCAL_API schedule must specify a valid and (plugin_)exposed call')
+        with self.assertRaises(ValueError):
             # Not a valid call
             controller.add_schedule('local_api', start + 120, 'LOCAL_API', {'name': 'do_basic_action',
                                                                             'parameters': {'action_type': 'foo', 'action_number': 4}}, None, None, None)
-        self.assertEqual(ctx.exception.message, 'could not convert string to float: foo')
         controller.add_schedule('local_api', start + 120, 'LOCAL_API', {'name': 'do_basic_action',
                                                                         'parameters': {'action_type': 3, 'action_number': 4}}, None, None, None)
         self.assertEqual(len(controller.schedules), 1)
