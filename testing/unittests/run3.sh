@@ -29,8 +29,8 @@ pytest master_tests/eeprom_extension_test.py --log-level=DEBUG --durations=2 --j
 echo "Running users tests"
 pytest gateway_tests/users_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayUsersTest.xml
 
-#echo "Running scheduling tests"
-#pytest gateway_tests/scheduling_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewaySchedulingTest.xml
+echo "Running scheduling tests"
+pytest gateway_tests/scheduling_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewaySchedulingTest.xml
 
 echo "Running shutter tests"
 pytest gateway_tests/shutter_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayShutterTest.xml

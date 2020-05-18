@@ -120,11 +120,11 @@ class SchedulingControllerTest(unittest.TestCase):
         with self.assertRaises(RuntimeError) as ctx:
             # Doesn't support duration
             controller.add_schedule('group_action', start + 120, 'GROUP_ACTION', None, None, 1000, None)
-        self.assertEqual(ctx.exception.message, 'A schedule of type GROUP_ACTION does not have a duration. It is a one-time trigger')
+        self.assertEqual(str(ctx.exception), 'A schedule of type GROUP_ACTION does not have a duration. It is a one-time trigger')
         with self.assertRaises(RuntimeError) as ctx:
             # Incorrect argument
             controller.add_schedule('group_action', start + 120, 'GROUP_ACTION', 'foo', None, None, None)
-        self.assertEqual(ctx.exception.message, 'The arguments of a GROUP_ACTION schedule must be an integer, representing the Group Action to be executed')
+        self.assertEqual(str(ctx.exception), 'The arguments of a GROUP_ACTION schedule must be an integer, representing the Group Action to be executed')
         controller.add_schedule('group_action', start + 120, 'GROUP_ACTION', 1, None, None, None)
         self.assertEqual(len(controller.schedules), 1)
         self.assertEqual(controller.schedules[0].name, 'group_action')
@@ -146,16 +146,16 @@ class SchedulingControllerTest(unittest.TestCase):
         with self.assertRaises(RuntimeError) as ctx:
             # Doesn't support duration
             controller.add_schedule('basic_action', start + 120, 'BASIC_ACTION', None, None, 1000, None)
-        self.assertEqual(ctx.exception.message, 'A schedule of type BASIC_ACTION does not have a duration. It is a one-time trigger')
+        self.assertEqual(str(ctx.exception), 'A schedule of type BASIC_ACTION does not have a duration. It is a one-time trigger')
         invalid_arguments_error = 'The arguments of a BASIC_ACTION schedule must be of type dict with arguments `action_type` and `action_number`'
         with self.assertRaises(RuntimeError) as ctx:
             # Incorrect argument
             controller.add_schedule('basic_action', start + 120, 'BASIC_ACTION', 'foo', None, None, None)
-        self.assertEqual(ctx.exception.message, invalid_arguments_error)
+        self.assertEqual(str(ctx.exception), invalid_arguments_error)
         with self.assertRaises(RuntimeError) as ctx:
             # Incorrect argument
             controller.add_schedule('basic_action', start + 120, 'BASIC_ACTION', {'action_type': 1}, None, None, None)
-        self.assertEqual(ctx.exception.message, invalid_arguments_error)
+        self.assertEqual(str(ctx.exception), invalid_arguments_error)
         controller.add_schedule('basic_action', start + 120, 'BASIC_ACTION', {'action_type': 1, 'action_number': 2}, None, None, None)
         self.assertEqual(len(controller.schedules), 1)
         self.assertEqual(controller.schedules[0].name, 'basic_action')
@@ -177,16 +177,16 @@ class SchedulingControllerTest(unittest.TestCase):
         with self.assertRaises(RuntimeError) as ctx:
             # Doesn't support duration
             controller.add_schedule('local_api', start + 120, 'LOCAL_API', None, None, 1000, None)
-        self.assertEqual(ctx.exception.message, 'A schedule of type LOCAL_API does not have a duration. It is a one-time trigger')
+        self.assertEqual(str(ctx.exception), 'A schedule of type LOCAL_API does not have a duration. It is a one-time trigger')
         invalid_arguments_error = 'The arguments of a LOCAL_API schedule must be of type dict with arguments `name` and `parameters`'
         with self.assertRaises(RuntimeError) as ctx:
             # Incorrect argument
             controller.add_schedule('local_api', start + 120, 'LOCAL_API', 'foo', None, None, None)
-        self.assertEqual(ctx.exception.message, invalid_arguments_error)
+        self.assertEqual(str(ctx.exception), invalid_arguments_error)
         with self.assertRaises(RuntimeError) as ctx:
             # Incorrect argument
             controller.add_schedule('local_api', start + 120, 'LOCAL_API', {'name': 1}, None, None, None)
-        self.assertEqual(ctx.exception.message, invalid_arguments_error)
+        self.assertEqual(str(ctx.exception), invalid_arguments_error)
         with self.assertRaises(RuntimeError) as ctx:
             # Not a valid call
             controller.add_schedule('local_api', start + 120, 'LOCAL_API', {'name': 'foo', 'parameters': {}}, None, None, None)
