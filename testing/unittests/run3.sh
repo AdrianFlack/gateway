@@ -50,29 +50,29 @@ pytest power_tests/time_keeper_test.py --log-level=DEBUG --durations=2 --junit-x
 echo "Running plugin interfaces tests"
 pytest plugins_tests/interfaces_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/PluginsInterfacesTest.xml
 
-#echo "Running pulse counter controller tests"
-#python3 gateway_tests/pulses_test.py
+echo "Running pulse counter controller tests"
+pytest gateway_tests/pulses_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayPulsesTestTest.xml
 
 echo "Running classic controller tests"
 pytest gateway/hal/master_controller_classic_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayHalClassicController.xml
 
-#echo "Running core controller tests"
-#python3 gateway/hal/master_controller_core_test.py
+echo "Running core controller tests"
+pytest gateway/hal/master_controller_core_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayHalControllerCoreTest.xml
 
 echo "Running frontpanel classic controller tests"
-python3 gateway/hal/frontpanel_controller_classic_test.py
+pytest gateway/hal/frontpanel_controller_classic_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayHalFrontpanelControllerClassicTest.xml
 
 echo "Running frontpanel core controller tests"
-python3 gateway/hal/frontpanel_controller_core_test.py
+pytest gateway/hal/frontpanel_controller_core_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayHalFrontpanelControllerCoreTest.xml
 
-#echo "Running observer tests"
-#python3 gateway/observer_test.py
+echo "Running observer tests"
+pytest gateway/observer_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/GatewayObserverTest.xml
 
 #echo "Running Core uCAN tests"
 #python3 master_core_tests/ucan_communicator_test.py
 
-#echo "Running Core memory file tests"
-#python3 master_core_tests/memory_file_test.py
+echo "Running Core memory file tests"
+pytest master_core_tests/memory_file_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/CoreMemoryFileTest.xml
 
 echo "Running Core memory types tests"
 pytest master_core_tests/memory_types_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/CoreMemoryTypesTest.xml
