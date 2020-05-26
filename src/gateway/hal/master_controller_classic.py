@@ -80,7 +80,7 @@ class MasterClassicController(MasterController):
         self._synchronization_thread = DaemonThread(name='MasterClassicController synchronization',
                                                     target=self._synchronize,
                                                     interval=30, delay=10)
-        self._master_version = () # type: Tuple[int,int,int]
+        self._master_version = (0, 0, 0)  # type: Tuple[int,int,int]
         self._master_online = False
         self._input_interval = 300
         self._input_last_updated = 0.0
