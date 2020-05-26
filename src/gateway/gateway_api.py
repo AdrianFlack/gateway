@@ -772,6 +772,7 @@ class GatewayApi(object):
         return dict()
 
     def get_realtime_power(self):
+        # type: () -> Dict[str,List[List[Optional[float]]]]
         """ Get the realtime power measurement values.
 
         :returns: dict with the module id as key and the following array as value: \
@@ -846,6 +847,7 @@ class GatewayApi(object):
         return output
 
     def get_total_energy(self):
+        # type: () -> Dict[str,List[List[Optional[float]]]]
         """ Get the total energy (kWh) consumed by the power modules.
 
         :returns: dict with the module id as key and the following array as value: [day, night].
@@ -861,8 +863,8 @@ class GatewayApi(object):
                 version = modules[module_id]['version']
                 num_ports = power_api.NUM_PORTS[version]
 
-                day = [None] * num_ports  # type: List[Optional[int]]
-                night = [None] * num_ports  # type: List[Optional[int]]
+                day = [None] * num_ports  # type: List[Optional[float]]
+                night = [None] * num_ports  # type: List[Optional[float]]
                 if version in [power_api.ENERGY_MODULE, power_api.POWER_MODULE]:
                     day = [convert_nan(entry, default=None)
                            for entry in self.__power_communicator.do_command(addr, power_api.get_day_energy(version))]

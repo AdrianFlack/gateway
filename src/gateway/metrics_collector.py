@@ -17,22 +17,24 @@ This module collects OpenMotics metrics and makes them available to the MetricsC
 """
 
 from __future__ import absolute_import
+
 import logging
 import time
 from collections import deque
 from threading import Event, Thread
 
-from gateway.maintenance_communicator import InMaintenanceModeException
+import six
+
 from gateway.events import GatewayEvent
-from ioc import INJECTED, Inject, Injectable, Singleton
+from gateway.maintenance_communicator import InMaintenanceModeException
 from gateway.models import Database
+from ioc import INJECTED, Inject, Injectable, Singleton
 from platform_utils import Hardware
 from power import power_api
 from serial_utils import CommunicationTimedOutException
-import six
 
 if False:  # MYPY
-    from typing import Dict, Any, List, Tuple
+    from typing import Callable, Dict, Any, List, Optional, Tuple
     from gateway.input_controller import InputController
     from gateway.output_controller import OutputController
     from gateway.sensor_controller import SensorController
@@ -92,7 +94,7 @@ class MetricsCollector(object):
         self._cloud_intervals = {metric_type: 900 for metric_type in self._min_intervals}
         self._sleepers = {metric_type: {'event': Event(),
                                         'start': 0,
-                                        'end': 0} for metric_type in self._min_intervals}
+                                        'end': 0} for metric_type in self._min_intervals}  # type: Dict[str,Dict[str,Any]]
 
         self._gateway_api = gateway_api  # type: GatewayApi
         self._thermostat_controller = thermostat_controller  # type: ThermostatController
@@ -143,6 +145,7 @@ class MetricsCollector(object):
     def set_websocket_interval(self, client_id, metric_type, interval):
         if metric_type not in self._min_intervals:  # e.g. event metric types
             return
+        assert self._metrics_controller
         metric_types = self._metrics_controller.get_filter('metric_type', metric_type)
         for mtype in self._websocket_intervals:
             if mtype in metric_types:
@@ -154,6 +157,7 @@ class MetricsCollector(object):
                 self._update_intervals(mtype)
 
     def set_plugin_intervals(self, plugin_intervals):
+        assert self._metrics_controller
         for interval_info in plugin_intervals:
             sources = self._metrics_controller.get_filter('source', interval_info['source'])
             metric_types = self._metrics_controller.get_filter('metric_type', interval_info['metric_type'])
@@ -416,6 +420,7 @@ class MetricsCollector(object):
                                                   'cloud_time_ago_send': self._metrics_controller.cloud_stats['time_ago_send'],
                                                   'cloud_time_ago_try': self._metrics_controller.cloud_stats['time_ago_try']},
                                           timestamp=now)
+                    assert self._plugin_controller
                     for plugin in self._plugin_controller.get_plugins():
                         self._enqueue_metrics(metric_type=metric_type,
                                               tags={'name': 'gateway',
@@ -611,82 +616,87 @@ class MetricsCollector(object):
             self._pause(start, metric_type)
 
     def _run_power_openmotics(self, metric_type):
+        # type: (str) -> None
+        while not self._stopped:
+            start = time.time()
+            self._run_power_metrics(metric_type)
+            if self._stopped:
+                return
+            self._pause(start, metric_type)
+
+    def _run_power_metrics(self, metric_type):
+        # type: (str) -> None
         def _add_if_not_none(dictionary, field, value):
             if value is not None:
                 dictionary[field] = float(value)
 
-        while not self._stopped:
-            start = time.time()
-            now = time.time()
-            mapping = {}
-            power_data = {}
+        now = time.time()
+        mapping = {}
+        power_data = {}
+        try:
+            result = self._gateway_api.get_power_modules()
+            for power_module in result:
+                device_id = '{0}.{{0}}'.format(power_module['address'])
+                mapping[str(power_module['id'])] = device_id
+                for i in range(power_api.NUM_PORTS[power_module['version']]):
+                    power_data[device_id.format(i)] = {'name': power_module['input{0}'.format(i)]}
+        except CommunicationTimedOutException:
+            logger.error('Error getting power modules: CommunicationTimedOutException')
+        except InMaintenanceModeException:
+            logger.info('Error getting power modules: InMaintenanceModeException')
+        except Exception as ex:
+            logger.exception('Error getting power modules: {0}'.format(ex))
+        try:
+            result = self._gateway_api.get_realtime_power()
+            for module_id, device_id in mapping.items():
+                if module_id in result:
+                    for index, entry in enumerate(result[module_id]):
+                        voltage, frequency, current, power = entry
+                        if device_id.format(index) in power_data:
+                            usage = power_data[device_id.format(index)]
+                            _add_if_not_none(usage, 'voltage', voltage)
+                            _add_if_not_none(usage, 'frequency', frequency)
+                            _add_if_not_none(usage, 'current', current)
+                            _add_if_not_none(usage, 'power', power)
+        except CommunicationTimedOutException:
+            logger.error('Error getting realtime power: CommunicationTimedOutException')
+        except InMaintenanceModeException:
+            logger.info('Error getting realtime power: InMaintenanceModeException')
+        except Exception as ex:
+            logger.exception('Error getting realtime power: {0}'.format(ex))
+        try:
+            result = self._gateway_api.get_total_energy()
+            for module_id, device_id in mapping.items():
+                if module_id in result:
+                    for index, entry in enumerate(result[module_id]):
+                        day, night = entry
+                        total = None
+                        if day is not None and night is not None:
+                            total = day + night
+                        if device_id.format(index) in power_data:
+                            usage = power_data[device_id.format(index)]
+                            _add_if_not_none(usage, 'counter', total)
+                            _add_if_not_none(usage, 'counter_day', day)
+                            _add_if_not_none(usage, 'counter_night', night)
+        except CommunicationTimedOutException:
+            logger.error('Error getting total energy: CommunicationTimedOutException')
+        except InMaintenanceModeException:
+            logger.info('Error getting total energy: InMaintenanceModeException')
+        except Exception as ex:
+            logger.exception('Error getting total energy: {0}'.format(ex))
+        for device_id in power_data:
+            device = power_data[device_id]
             try:
-                result = self._gateway_api.get_power_modules()
-                for power_module in result:
-                    device_id = '{0}.{{0}}'.format(power_module['address'])
-                    mapping[str(power_module['id'])] = device_id
-                    for i in range(power_api.NUM_PORTS[power_module['version']]):
-                        power_data[device_id.format(i)] = {'name': power_module['input{0}'.format(i)]}
-            except CommunicationTimedOutException:
-                logger.error('Error getting power modules: CommunicationTimedOutException')
-            except InMaintenanceModeException:
-                logger.info('Error getting power modules: InMaintenanceModeException')
+                if device['name'] != '' and len(device) > 1:
+                    name = device.pop('name')
+                    self._enqueue_metrics(metric_type=metric_type,
+                                          values=device,
+                                          tags={'type': 'openmotics',
+                                                'id': device_id,
+                                                'name': name},
+                                          timestamp=now)
             except Exception as ex:
-                logger.exception('Error getting power modules: {0}'.format(ex))
-            try:
-                result = self._gateway_api.get_realtime_power()
-                for module_id, device_id in mapping.items():
-                    if module_id in result:
-                        for index, entry in enumerate(result[module_id]):
-                            voltage, frequency, current, power = entry
-                            if device_id.format(index) in power_data:
-                                usage = power_data[device_id.format(index)]
-                                _add_if_not_none(usage, 'voltage', voltage)
-                                _add_if_not_none(usage, 'frequency', frequency)
-                                _add_if_not_none(usage, 'current', current)
-                                _add_if_not_none(usage, 'power', power)
-            except CommunicationTimedOutException:
-                logger.error('Error getting realtime power: CommunicationTimedOutException')
-            except InMaintenanceModeException:
-                logger.info('Error getting realtime power: InMaintenanceModeException')
-            except Exception as ex:
-                logger.exception('Error getting realtime power: {0}'.format(ex))
-            try:
-                result = self._gateway_api.get_total_energy()
-                for module_id, device_id in mapping.items():
-                    if module_id in result:
-                        for index, entry in enumerate(result[module_id]):
-                            day, night = entry
-                            total = None
-                            if day is not None and night is not None:
-                                total = day + night
-                            if device_id.format(index) in power_data:
-                                usage = power_data[device_id.format(index)]
-                                _add_if_not_none(usage, 'counter', total)
-                                _add_if_not_none(usage, 'counter_day', day)
-                                _add_if_not_none(usage, 'counter_night', night)
-            except CommunicationTimedOutException:
-                logger.error('Error getting total energy: CommunicationTimedOutException')
-            except InMaintenanceModeException:
-                logger.info('Error getting total energy: InMaintenanceModeException')
-            except Exception as ex:
-                logger.exception('Error getting total energy: {0}'.format(ex))
-            for device_id in power_data:
-                device = power_data[device_id]
-                try:
-                    if device['name'] != '' and len(device) > 1:
-                        name = device.pop('name')
-                        self._enqueue_metrics(metric_type=metric_type,
-                                              values=device,
-                                              tags={'type': 'openmotics',
-                                                    'id': device_id,
-                                                    'name': name},
-                                              timestamp=now)
-                except Exception as ex:
-                    logger.exception('Error processing OpenMotics power device {0}: {1}'.format(device_id, ex))
-            if self._stopped:
-                return
-            self._pause(start, metric_type)
+                logger.exception('Error processing OpenMotics power device {0}: {1}'.format(device_id, ex))
 
     def _run_power_openmotics_analytics(self, metric_type):
         while not self._stopped:
