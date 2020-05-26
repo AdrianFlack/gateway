@@ -17,6 +17,7 @@ The maintenance module contains the MaintenanceService class.
 """
 from __future__ import absolute_import
 
+
 # TODO: This needs to be moved to a general `master` folder with `classic` and `core` subfolders
 
 class InMaintenanceModeException(Exception):
