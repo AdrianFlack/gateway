@@ -18,6 +18,7 @@ class is used to create the power_api.
 """
 
 from __future__ import absolute_import
+
 import struct
 
 CRC_TABLE = [0, 49, 98, 83, 196, 245, 166, 151, 185, 136, 219, 234, 125, 76, 31, 46, 67, 114, 33,
@@ -151,3 +152,6 @@ class PowerCommand(object):
             return struct.unpack('%dB' % len(data), data)
         else:
             return struct.unpack(self.output_format, data)
+
+    def __repr__(self):
+        return '<PowerCommand {} {} {} {} {}>'.format(self.mode, self.type, self.input_format, self.output_format, self.module_type)
