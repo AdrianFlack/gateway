@@ -100,9 +100,9 @@ class PowerCommand(object):
         :param data: data to send to the power module
         :rtype: string
         """
-        data = struct.pack(self.input_format, *data)
+        buffer = struct.pack(self.input_format, *data)
         header = self.module_type + chr(address) + chr(cid) + str(self.mode) + str(self.type)
-        payload = chr(len(data)) + str(data)
+        payload = chr(len(buffer)) + str(buffer)
         if self.module_type == 'E':
             crc = crc7(header + payload)
         else:
@@ -118,9 +118,9 @@ class PowerCommand(object):
         :param data: data to send to the power module
         :rtype: string
         """
-        data = struct.pack(self.output_format, *data)
+        buffer = struct.pack(self.output_format, *data)
         header = self.module_type + chr(address) + chr(cid) + str(self.mode) + str(self.type)
-        payload = chr(len(data)) + str(data)
+        payload = chr(len(buffer)) + str(buffer)
         if self.module_type == 'E':
             crc = crc7(header + payload)
         else:
