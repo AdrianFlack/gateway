@@ -133,7 +133,7 @@ class SerialMock(object):
         if self.__timeout != 0 and self.__sequence[0][1] == '':
             time.sleep(self.__timeout)
             self.__sequence.pop(0)
-            return b''
+            return bytearray(b'')
         else:
             ret = self.__sequence[0][1][:size]
             self.__sequence[0] = (self.__sequence[0][0], self.__sequence[0][1][size:])

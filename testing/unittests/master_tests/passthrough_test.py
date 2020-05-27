@@ -57,9 +57,9 @@ class PassthroughServiceTest(unittest.TestCase):
         passthrough = PassthroughService()
         passthrough.start()
 
-        master_pty.fd.write(b'data for the passthrough')
+        master_pty.fd.write(bytearray(b'data for the passthrough'))
         master_pty.master_wait()
-        master_pty.fd.write(b'more data')
+        master_pty.fd.write(bytearray(b'more data'))
         master_pty.master_wait()
         time.sleep(0.2)
 
