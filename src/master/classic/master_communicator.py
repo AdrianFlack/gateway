@@ -135,6 +135,7 @@ class MasterCommunicator(object):
         return ret
 
     def __write_to_serial(self, data):
+        # type: (bytearray) -> None
         """ Write data to the serial port.
 
         :param data: the data to write
@@ -256,10 +257,12 @@ class MasterCommunicator(object):
         self.__command_lock.release()
 
     def __push_passthrough_data(self, data):
+        # type: (bytearray) -> None
         if self.__passthrough_enabled:
             self.__passthrough_queue.put(data)
 
     def send_passthrough_data(self, data):
+        # type: (bytearray) -> None
         """ Send raw data on the serial port.
 
         :param data: string of bytes with raw command for the master.
@@ -284,7 +287,7 @@ class MasterCommunicator(object):
 
         :returns: string containing unprocessed output
         """
-        data = self.__passthrough_queue.get()
+        data = self.__passthrough_queue.get()  # type: bytearray
         if data[-4:] == '\r\n\r\n':
             self.__passthrough_done.set()
         return data
@@ -399,7 +402,7 @@ class MasterCommunicator(object):
                 return ''
 
         read_state = ReadState()
-        data = ""
+        data = bytearray(b"")
 
         while self.__running:
             # TODO: use a non blocking serial instead?
@@ -430,7 +433,7 @@ class MasterCommunicator(object):
                 # No else here: data might not be empty when current_consumer is done
                 if read_state.should_find_consumer():
                     start_bytes = self.__get_start_bytes()
-                    leftovers = ""  # for unconsumed bytes; these will go to the passthrough.
+                    leftovers = bytearray(b"")  # for unconsumed bytes; these will go to the passthrough.
 
                     while len(data) > 0:
                         if data[0] in start_bytes:
@@ -454,7 +457,7 @@ class MasterCommunicator(object):
                                 # waiting for the next serial.read()
                                 break
 
-                        leftovers += data[0]
+                        leftovers.append(data[0])
                         data = data[1:]
 
                     if len(leftovers) > 0:

@@ -40,11 +40,11 @@ class PassthroughServiceTest(unittest.TestCase):
 
     def test_passthrough(self):
         """ Test the passthrough. """
-        master_pty = DummyPty(['response',
-                               'more response'])
+        master_pty = DummyPty([bytearray(b'response'),
+                               bytearray(b'more response')])
         passthrough_mock = SerialMock([
-                        sin("data for the passthrough"), sout("response"),
-                        sin("more data"), sout("more response")])
+                        sin(bytearray(b"data for the passthrough")), sout(bytearray(b"response")),
+                        sin(bytearray(b"more data")), sout(bytearray(b"more response"))])
         SetUpTestInjections(controller_serial=master_pty,
                             passthrough_serial=passthrough_mock)
 
@@ -57,9 +57,9 @@ class PassthroughServiceTest(unittest.TestCase):
         passthrough = PassthroughService()
         passthrough.start()
 
-        master_pty.fd.write('data for the passthrough')
+        master_pty.fd.write(bytearray(b'data for the passthrough'))
         master_pty.master_wait()
-        master_pty.fd.write('more data')
+        master_pty.fd.write(bytearray(b'more data'))
         master_pty.master_wait()
         time.sleep(0.2)
 

@@ -63,7 +63,7 @@ class PassthroughService(object):
     def __reader(self):
         """ Reads from the master and writes to the passthrough serial. """
         while not self.__stopped:
-            data = self.__master_communicator.get_passthrough_data()
+            data = self.__master_communicator.get_passthrough_data()  # type: bytearray
             if data and len(data) > 0:
                 if self.__verbose:
                     logger.info("Data for passthrough: %s", printable(data))
@@ -72,7 +72,7 @@ class PassthroughService(object):
     def __writer(self):
         """ Reads from the passthrough serial and writes to the master. """
         while not self.__stopped:
-            data = self.__passthrough_serial.read(1)
+            data = self.__passthrough_serial.read(1)  # type: bytearray
             if data and len(data) > 0:
                 num_bytes = self.__passthrough_serial.inWaiting()
                 if num_bytes > 0:

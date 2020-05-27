@@ -31,13 +31,13 @@ from serial import Serial
 from serial_utils import printable
 
 if False:  # MYPY
-    from typing import List, Optional
+    from typing import List, Optional, Tuple
 
 
 class DummyPty(object):
     def __init__(self, sequence):
-        # type: (List[str]) -> None
-        self._replies = []  # type: List[str]
+        # type: (List[bytearray]) -> None
+        self._replies = []  # type: List[bytearray]
         self._sequence = sequence
         self._read = threading.Event()
         master, slave = pty.openpty()
@@ -46,7 +46,7 @@ class DummyPty(object):
         self._serial.timeout = None
 
     def master_reply(self, data):
-        # type: (str) -> None
+        # type: (bytearray) -> None
         self._replies.append(data)
 
     def master_wait(self, timeout=2):
@@ -55,14 +55,14 @@ class DummyPty(object):
         self._read.wait(timeout)
 
     def read(self, size=None):
-        # type: (Optional[int]) -> str
+        # type: (Optional[int]) -> bytearray
         data = self._serial.read(size)
         if data:
             self._read.set()
-        return data
+        return bytearray(data)
 
     def write(self, data):
-        # type: (str) -> int
+        # type: (bytearray) -> int
         if data != self._sequence[0]:
             assert printable(self._sequence[0]) == printable(data)
         self._sequence.pop(0)
@@ -86,11 +86,13 @@ class DummyPty(object):
 
 
 def sin(data):
+    # type: (bytearray) -> Tuple[str, bytearray]
     """ Input for the SerialMock """
     return 'i', data
 
 
 def sout(data):
+    # type: (bytearray) -> Tuple[str, bytearray]
     """ Output from the SerialMock """
     return 'o', data
 
@@ -104,15 +106,17 @@ class SerialMock(object):
     """
 
     def __init__(self, sequence, timeout=0):
+        # type: (List[Tuple[str, bytearray]], int) -> None
         """ Takes a sequence of sin() and sout(). Check if we get the sin bytes on write(),
         gives the sout bytes to read(). """
-        self.__sequence = sequence
+        self.__sequence = sequence  # type: List[Tuple[str, bytearray]]
         self.__timeout = timeout
 
         self.bytes_written = 0
         self.bytes_read = 0
 
     def write(self, data):
+        # type: (bytearray) -> None
         """ Write data to serial port """
         while self.__sequence[0][0] == 'o':
             time.sleep(0.01)
@@ -124,6 +128,7 @@ class SerialMock(object):
         self.bytes_written += len(data)
 
     def read(self, size):
+        # type: (int) -> bytearray
         """ Read size bytes from serial port """
         while len(self.__sequence) == 0 or self.__sequence[0][0] == 'i':
             time.sleep(0.01)
@@ -131,7 +136,7 @@ class SerialMock(object):
         if self.__timeout != 0 and self.__sequence[0][1] == '':
             time.sleep(self.__timeout)
             self.__sequence.pop(0)
-            return ''
+            return bytearray(b'')
         else:
             ret = self.__sequence[0][1][:size]
             self.__sequence[0] = (self.__sequence[0][0], self.__sequence[0][1][size:])

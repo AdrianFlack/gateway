@@ -37,9 +37,12 @@ def printable(data):
     if isinstance(data, list):
         byte_notation = ' '.join(['{0: >3}'.format(i) for i in data])
         string_notation = ''.join([str(chr(i)) if 32 < i <= 126 else '.' for i in data])
-    else:
+    elif isinstance(data, str):
         byte_notation = ' '.join(['{0: >3}'.format(ord(c)) for c in data])
         string_notation = ''.join([c if 32 < ord(c) <= 126 else '.' for c in data])
+    else:
+        byte_notation = ' '.join(['{0: >3}'.format(c) for c in data])
+        string_notation = ''.join([str(c) if 32 < c <= 126 else '.' for c in data])
     return '{0}    {1}'.format(byte_notation, string_notation)
 
 
