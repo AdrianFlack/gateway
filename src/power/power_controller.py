@@ -18,10 +18,18 @@ power modules and their address.
 """
 
 from __future__ import absolute_import
+
 import sqlite3
 from threading import Lock
-from ioc import Injectable, Inject, INJECTED, Singleton
-from .power_api import POWER_MODULE, ENERGY_MODULE, P1_CONCENTRATOR, NUM_PORTS, LARGEST_MODULE_TYPE
+
+from ioc import INJECTED, Inject, Injectable, Singleton
+from power import power_api
+from power.power_api import ENERGY_MODULE, LARGEST_MODULE_TYPE, NUM_PORTS, \
+    P1_CONCENTRATOR, POWER_MODULE
+
+if False:  # MYPY
+    from typing import Any, Dict, List, Optional
+    from power.power_communicator import PowerCommunicator
 
 
 @Injectable.named('power_controller')
@@ -30,12 +38,14 @@ class PowerController(object):
     """ The PowerController keeps track of the registered power modules. """
 
     @Inject
-    def __init__(self, power_db=INJECTED):
+    def __init__(self, power_communicator=INJECTED, power_db=INJECTED):
+        # type: (PowerCommunicator, str) -> None
         """
         Constructor a new PowerController.
 
         :param power_db: filename of the sqlite database.
         """
+        self._power_communicator = power_communicator
 
         self._power_schema = {'name': 'TEXT default \'\'',
                               'address': 'INTEGER',
@@ -84,6 +94,40 @@ class PowerController(object):
                     for field, default in schema.items():
                         if field not in fields:
                             self.__cursor.execute('ALTER TABLE {0} ADD COLUMN {1} {2};'.format(table, field, default))
+
+    def get_module_current(self, module, phase=None):
+        # type: (Dict[str,Any], Optional[int]) -> List[Any]
+        # TODO return type depends on module version/phase, translate here?
+        cmd = power_api.get_current(module['version'], phase=phase)
+        return self._power_communicator.do_command(module['address'], cmd)
+
+    def get_module_frequency(self, module):
+        # type: (Dict[str,Any]) -> List[float]
+        cmd = power_api.get_frequency(module['version'])
+        return self._power_communicator.do_command(module['address'], cmd)
+
+    def get_module_power(self, module):
+        # type: (Dict[str,Any]) -> List[float]
+        cmd = power_api.get_power(module['version'])
+        return self._power_communicator.do_command(module['address'], cmd)
+
+    def get_module_voltage(self, module, phase=None):
+        # type: (Dict[str,Any], Optional[int]) -> List[Any]
+        # TODO return type depends on module version/phase, translate here?
+        cmd = power_api.get_voltage(module['version'], phase=phase)
+        return self._power_communicator.do_command(module['address'], cmd)
+
+    def get_module_day_energy(self, module):
+        # type: (Dict[str,Any]) -> List[Any]
+        # TODO return type depends on module version, translate here?
+        cmd = power_api.get_day_energy(module['version'])
+        return self._power_communicator.do_command(module['address'], cmd)
+
+    def get_module_night_energy(self, module):
+        # type: (Dict[str,Any]) -> List[Any]
+        # TODO return type depends on module version, translate here?
+        cmd = power_api.get_night_energy(module['version'])
+        return self._power_communicator.do_command(module['address'], cmd)
 
     def get_power_modules(self):
         """
@@ -169,3 +213,32 @@ class PowerController(object):
     def close(self):
         """ Close the database connection. """
         self.__connection.close()
+
+
+@Injectable.named('p1_controller')
+@Singleton
+class P1Controller(object):
+    """ The PowerController keeps track of the registered power modules. """
+
+    @Inject
+    def __init__(self, power_communicator=INJECTED):
+        # type: (PowerCommunicator) -> None
+        """
+        Constructor a new P1Controller.
+        """
+        self._power_communicator = power_communicator
+
+    def get_module_status(self, module, phase=None):
+        # type: (Dict[str,Any], Optional[int]) -> List[int]
+        cmd = power_api.get_status_p1(module['version'])
+        return self._power_communicator.do_command(module['address'], cmd)
+
+    def get_module_delivered_power(self, module, phase=None):
+        # type: (Dict[str,Any], Optional[int]) -> List[str]
+        cmd = power_api.get_delivered_power(module['version'])
+        return self._power_communicator.do_command(module['address'], cmd)
+
+    def get_module_received_power(self, module, phase=None):
+        # type: (Dict[str,Any], Optional[int]) -> List[str]
+        cmd = power_api.get_received_power(module['version'])
+        return self._power_communicator.do_command(module['address'], cmd)
