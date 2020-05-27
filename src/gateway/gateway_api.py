@@ -686,6 +686,7 @@ class GatewayApi(object):
     # Power functions
 
     def get_power_modules(self):
+        # type: () -> List[Dict[str,Any]]
         """ Get information on the power modules.
 
         :returns: List of dict depending on the version of the power module. All versions \

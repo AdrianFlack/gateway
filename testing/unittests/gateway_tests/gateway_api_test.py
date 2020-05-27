@@ -40,6 +40,17 @@ class GatewayApiTest(unittest.TestCase):
                             configuration_controller=mock.Mock())
         self.api = GatewayApi()
 
+    def test_get_power_modules(self):
+        self.power_controller.get_power_modules.return_value = {
+            0: {'address': 0, 'name': 'Power', 'version': POWER_MODULE},
+            1: {'address': 1, 'name': 'P1', 'version': P1_CONCENTRATOR},
+        }
+        result = self.api.get_power_modules()
+        assert result == [
+            {'address': 'E0', 'name': 'Power', 'version': 8},
+            {'address': 'C1', 'name': 'P1', 'version': 1}
+        ]
+
     def test_get_realtime_power(self):
         self.power_controller.get_power_modules.return_value = {0: {'address': 0, 'version': POWER_MODULE}}
         self.power_controller.get_module_current.return_value = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
