@@ -17,8 +17,8 @@ pytest master_tests/outputs_test.py --log-level=DEBUG --durations=2 --junit-xml 
 echo "Running inputs tests"
 pytest master_tests/inputs_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/MasterInputsTest.xml
 
-#echo "Running passthrough tests"
-#pytest master_tests/passthrough_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/MasterPassthroughTest.xml
+echo "Running passthrough tests"
+pytest master_tests/passthrough_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/MasterPassthroughTest.xml
 
 echo "Running eeprom controller tests"
 pytest master_tests/eeprom_controller_test.py --log-level=DEBUG --durations=2 --junit-xml ../gw-unit-reports-3/MasterEEPROMControllerTest.xml

@@ -287,7 +287,7 @@ class MasterCommunicator(object):
         data = self.__passthrough_queue.get()
         if data[-4:] == '\r\n\r\n':
             self.__passthrough_done.set()
-        return data
+        return data.decode()
 
     def start_maintenance_mode(self):
         """ Start maintenance mode.
@@ -399,7 +399,7 @@ class MasterCommunicator(object):
                 return ''
 
         read_state = ReadState()
-        data = ""
+        data = b''
 
         while self.__running:
             # TODO: use a non blocking serial instead?
@@ -430,7 +430,7 @@ class MasterCommunicator(object):
                 # No else here: data might not be empty when current_consumer is done
                 if read_state.should_find_consumer():
                     start_bytes = self.__get_start_bytes()
-                    leftovers = ""  # for unconsumed bytes; these will go to the passthrough.
+                    leftovers = b""  # for unconsumed bytes; these will go to the passthrough.
 
                     while len(data) > 0:
                         if data[0] in start_bytes:
@@ -454,7 +454,7 @@ class MasterCommunicator(object):
                                 # waiting for the next serial.read()
                                 break
 
-                        leftovers += data[0]
+                        leftovers += bytes(data[0])
                         data = data[1:]
 
                     if len(leftovers) > 0:
