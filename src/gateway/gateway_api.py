@@ -954,7 +954,7 @@ class GatewayApi(object):
         if version != power_api.ENERGY_MODULE:
             raise ValueError('Unknown power api version')
         if input_id is None:
-            input_ids = range(12)
+            input_ids = list(range(12))
         else:
             input_id = int(input_id)
             if input_id < 0 or input_id > 11:
@@ -989,7 +989,7 @@ class GatewayApi(object):
         if version != power_api.ENERGY_MODULE:
             raise ValueError('Unknown power api version')
         if input_id is None:
-            input_ids = range(12)
+            input_ids = list(range(12))
         else:
             input_id = int(input_id)
             if input_id < 0 or input_id > 11:
