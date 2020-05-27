@@ -18,6 +18,7 @@ and call the master_api to complete the actions.
 """
 
 from __future__ import absolute_import
+
 import glob
 import logging
 import math
@@ -27,6 +28,7 @@ import sqlite3
 import subprocess
 import tempfile
 import threading
+
 from six.moves.configparser import ConfigParser
 
 import constants
@@ -35,6 +37,7 @@ from gateway.hal.master_controller import MasterController
 from ioc import INJECTED, Inject, Injectable, Singleton
 from platform_utils import System
 from power import power_api
+from power.power_api import RealtimePower
 from serial_utils import CommunicationTimedOutException
 
 if False:  # MYPY:
@@ -775,11 +778,9 @@ class GatewayApi(object):
         return dict()
 
     def get_realtime_power(self):
-        # type: () -> Dict[str,List[List[Optional[float]]]]
-        """ Get the realtime power measurement values.
-
-        :returns: dict with the module id as key and the following array as value: \
-        [voltage, frequency, current, power].
+        # type: () -> Dict[str,List[RealtimePower]]
+        """
+        Get the realtime power measurement values.
         """
         output = {}
         if self.__power_controller is None:
@@ -837,8 +838,11 @@ class GatewayApi(object):
 
                 out = []
                 for i in range(num_ports):
-                    out.append([convert_nan(volt[i], default=0.0), convert_nan(freq[i], default=0.0),
-                                convert_nan(current[i], default=0.0), convert_nan(power[i], default=0.0)])
+                    data = {'voltage': convert_nan(volt[i], default=0.0),
+                            'frequency': convert_nan(freq[i], default=0.0),
+                            'current': convert_nan(current[i], default=0.0),
+                            'power': convert_nan(power[i], default=0.0)}
+                    out.append(RealtimePower(**data))
 
                 output[str(module_id)] = out
             except CommunicationTimedOutException:

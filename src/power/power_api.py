@@ -17,7 +17,12 @@ Contains the definition of the power modules Api.
 """
 
 from __future__ import absolute_import
+
+from collections import namedtuple
+
 from power.power_command import PowerCommand
+
+RealtimePower = namedtuple('RealtimePower', ('voltage', 'frequency', 'current', 'power'))
 
 BROADCAST_ADDRESS = 255
 

@@ -1841,7 +1841,15 @@ class WebInterface(object):
         :returns: module id as the keys: [voltage, frequency, current, power].
         :rtype: dict
         """
-        return self._gateway_api.get_realtime_power()
+        response = {}
+        for module_id, items in self._gateway_api.get_realtime_power().items():
+            response[module_id] = []
+            for realtime_power in items:
+                response[module_id].append([realtime_power.voltage,
+                                            realtime_power.frequency,
+                                            realtime_power.current,
+                                            realtime_power.power])
+        return response
 
     @openmotics_api(auth=True)
     def get_total_energy(self):

@@ -646,17 +646,16 @@ class MetricsCollector(object):
         except Exception as ex:
             logger.exception('Error getting power modules: {0}'.format(ex))
         try:
-            realtime_power = self._gateway_api.get_realtime_power()
+            realtime_power_data = self._gateway_api.get_realtime_power()
             for module_id, device_id in mapping.items():
-                if module_id in realtime_power:
-                    for index, entry in enumerate(realtime_power[module_id]):
-                        voltage, frequency, current, power = entry
+                if module_id in realtime_power_data:
+                    for index, realtime_power in enumerate(realtime_power_data[module_id]):
                         if device_id.format(index) in power_data:
                             usage = power_data[device_id.format(index)]
-                            _add_if_not_none(usage, 'voltage', voltage)
-                            _add_if_not_none(usage, 'frequency', frequency)
-                            _add_if_not_none(usage, 'current', current)
-                            _add_if_not_none(usage, 'power', power)
+                            _add_if_not_none(usage, 'voltage', realtime_power.voltage)
+                            _add_if_not_none(usage, 'frequency', realtime_power.frequency)
+                            _add_if_not_none(usage, 'current', realtime_power.current)
+                            _add_if_not_none(usage, 'power', realtime_power.power)
         except CommunicationTimedOutException:
             logger.error('Error getting realtime power: CommunicationTimedOutException')
         except InMaintenanceModeException:
