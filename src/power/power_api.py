@@ -100,6 +100,16 @@ def get_status_p1(version):
         raise ValueError("Unknown power api version")
 
 
+def get_meter_p1(version, type=None):
+    """ Gets the meter id from a P1 concentrator """
+    if version == P1_CONCENTRATOR:
+        if type is None:
+            raise ValueError('A type is required')
+        return PowerCommand('G', 'M{0}\x00'.format(type), '', '224s', module_type='C')
+    else:
+        raise ValueError("Unknown power api version")
+
+
 def get_voltage(version, phase=None):
     """
     Get the voltage of a power module (in V)

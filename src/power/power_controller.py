@@ -228,17 +228,27 @@ class P1Controller(object):
         """
         self._power_communicator = power_communicator
 
-    def get_module_status(self, module, phase=None):
-        # type: (Dict[str,Any], Optional[int]) -> List[int]
+    def get_module_status(self, module):
+        # type: (Dict[str,Any]) -> List[int]
         cmd = power_api.get_status_p1(module['version'])
         return self._power_communicator.do_command(module['address'], cmd)
 
-    def get_module_delivered_power(self, module, phase=None):
-        # type: (Dict[str,Any], Optional[int]) -> List[str]
+    def get_module_meter_electricity(self, module):
+        # type: (Dict[str,Any]) -> List[str]
+        cmd = power_api.get_meter_p1(module['version'], type=1)
+        return self._power_communicator.do_command(module['address'], cmd)
+
+    def get_module_meter_gas(self, module):
+        # type: (Dict[str,Any]) -> List[str]
+        cmd = power_api.get_meter_p1(module['version'], type=2)
+        return self._power_communicator.do_command(module['address'], cmd)
+
+    def get_module_delivered_power(self, module):
+        # type: (Dict[str,Any]) -> List[str]
         cmd = power_api.get_delivered_power(module['version'])
         return self._power_communicator.do_command(module['address'], cmd)
 
-    def get_module_received_power(self, module, phase=None):
-        # type: (Dict[str,Any], Optional[int]) -> List[str]
+    def get_module_received_power(self, module):
+        # type: (Dict[str,Any]) -> List[str]
         cmd = power_api.get_received_power(module['version'])
         return self._power_communicator.do_command(module['address'], cmd)

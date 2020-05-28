@@ -19,36 +19,26 @@ Tests for the power controller module.
 """
 
 from __future__ import absolute_import
+
 import unittest
-import xmlrunner
-import os
+
+import mock
+
 from ioc import SetTestMode, SetUpTestInjections
-from power.power_controller import PowerController
-from power.power_api import POWER_MODULE
+from power.power_api import P1_CONCENTRATOR, POWER_MODULE, PowerCommand
+from power.power_controller import P1Controller, PowerController
 
 
 class PowerControllerTest(unittest.TestCase):
     """ Tests for PowerController. """
 
-    FILE = "test.db"
-
     @classmethod
     def setUpClass(cls):
         SetTestMode()
 
-    def setUp(self):  # pylint: disable=C0103
-        """ Run before each test. """
-        if os.path.exists(PowerControllerTest.FILE):
-            os.remove(PowerControllerTest.FILE)
-
-    def tearDown(self):  # pylint: disable=C0103
-        """ Run after each test. """
-        if os.path.exists(PowerControllerTest.FILE):
-            os.remove(PowerControllerTest.FILE)
-
     def __get_controller(self):
         """ Get a PowerController using FILE. """
-        SetUpTestInjections(power_db=PowerControllerTest.FILE)
+        SetUpTestInjections(power_db=':memory:')
         return PowerController()
 
     def test_empty(self):
@@ -180,5 +170,29 @@ class PowerControllerTest(unittest.TestCase):
         self.assertEqual(3, power_controller.get_address(1))
 
 
-if __name__ == "__main__":
-    unittest.main(testRunner=xmlrunner.XMLTestRunner(output='../gw-unit-reports'))
+class PowerP1Test(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        SetTestMode()
+
+    def setUp(self):
+        self.power_communicator = mock.Mock()
+        SetUpTestInjections(power_communicator=self.power_communicator,
+                            power_db=':memory:')
+        self.controller = P1Controller()
+
+    def test_get_module_meter_electricity(self):
+        with mock.patch.object(self.power_communicator, 'do_command') as cmd:
+            self.controller.get_module_meter_electricity({'version': P1_CONCENTRATOR,
+                                                          'address': '11.0'})
+            assert cmd.call_args_list == [
+                mock.call('11.0', PowerCommand('G', 'M1\x00', '', '224s', module_type='C'))
+            ]
+
+    def test_get_module_meter_gas(self):
+        with mock.patch.object(self.power_communicator, 'do_command') as cmd:
+            self.controller.get_module_meter_gas({'version': P1_CONCENTRATOR,
+                                                          'address': '11.0'})
+            assert cmd.call_args_list == [
+                mock.call('11.0', PowerCommand('G', 'M2\x00', '', '224s', module_type='C'))
+            ]
