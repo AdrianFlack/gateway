@@ -229,26 +229,92 @@ class P1Controller(object):
         self._power_communicator = power_communicator
 
     def get_module_status(self, module):
-        # type: (Dict[str,Any]) -> List[int]
+        # type: (Dict[str,Any]) -> List[bool]
         cmd = power_api.get_status_p1(module['version'])
-        return self._power_communicator.do_command(module['address'], cmd)
+        payload = self._power_communicator.do_command(module['address'], cmd)[0]
 
-    def get_module_meter_electricity(self, module):
-        # type: (Dict[str,Any]) -> List[str]
-        cmd = power_api.get_meter_p1(module['version'], type=1)
-        return self._power_communicator.do_command(module['address'], cmd)
+        status = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            status.append((payload & 1 << port_id) != 0)
+        return status
 
-    def get_module_meter_gas(self, module):
-        # type: (Dict[str,Any]) -> List[str]
-        cmd = power_api.get_meter_p1(module['version'], type=2)
-        return self._power_communicator.do_command(module['address'], cmd)
+    def get_module_meter(self, module, type=1):
+        # type: (Dict[str,Any], int) -> List[str]
+        """
+        Request meter id for all meters and parse repsonse.
+        """
+        cmd = power_api.get_meter_p1(module['version'], type=type)
+        payload = self._power_communicator.do_command(module['address'], cmd)[0]
+
+        meters = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            meters.append(payload[port_id * 28:(port_id + 1) * 28])
+        return meters
+
+    def get_module_current(self, module, type=1):
+        # type: (Dict[str,Any], int) -> List[Dict[str,float]]
+        """
+        Request phase voltages for all meters and parse repsonse.
+        """
+        payloads = {}
+        for i in range(1, 4):
+            cmd = power_api.get_current(module['version'], phase=i)
+            payloads['phase{}'.format(i)] = self._power_communicator.do_command(module['address'], cmd)[0]
+
+        currents = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            phases = {}
+            for phase, payload in payloads.items():
+                try:
+                    phases[phase] = float(payload[port_id * 5:(port_id + 1) * 6][:3])
+                except ValueError:
+                    phases[phase] = 0.0
+            currents.append(phases)
+        return currents
+
+    def get_module_voltage(self, module, type=1):
+        # type: (Dict[str,Any], int) -> List[Dict[str,float]]
+        """
+        Request phase voltages for all meters and parse repsonse.
+        """
+        payloads = {}
+        for i in range(1, 4):
+            cmd = power_api.get_voltage(module['version'], phase=i)
+            payloads['phase{}'.format(i)] = self._power_communicator.do_command(module['address'], cmd)[0]
+
+        voltages = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            phases = {}
+            for phase, payload in payloads.items():
+                try:
+                    phases[phase] = float(payload[port_id * 7:(port_id + 1) * 7][:5])
+                except ValueError:
+                    phases[phase] = 0.0
+            voltages.append(phases)
+        return voltages
 
     def get_module_delivered_power(self, module):
-        # type: (Dict[str,Any]) -> List[str]
+        # type: (Dict[str,Any]) -> List[float]
         cmd = power_api.get_delivered_power(module['version'])
-        return self._power_communicator.do_command(module['address'], cmd)
+        payload = self._power_communicator.do_command(module['address'], cmd)[0]
+
+        delivered = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            try:
+                delivered.append(float(payload[port_id * 9:(port_id + 1) * 9][:6]))
+            except ValueError:
+                delivered.append(0.0)
+        return delivered
 
     def get_module_received_power(self, module):
-        # type: (Dict[str,Any]) -> List[str]
+        # type: (Dict[str,Any]) -> List[float]
         cmd = power_api.get_received_power(module['version'])
-        return self._power_communicator.do_command(module['address'], cmd)
+        payload = self._power_communicator.do_command(module['address'], cmd)[0]
+
+        received = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            try:
+                received.append(float(payload[port_id * 9:(port_id + 1) * 9][:6]))
+            except ValueError:
+                received.append(0.0)
+        return received

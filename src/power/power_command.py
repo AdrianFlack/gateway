@@ -153,5 +153,12 @@ class PowerCommand(object):
         else:
             return struct.unpack(self.output_format, data)
 
+    def __eq__(self, other):
+        return self.mode == other.mode \
+            and self.type == other.type \
+            and self.input_format == other.input_format \
+            and self.output_format == other.output_format \
+            and self.module_type == other.module_type
+
     def __repr__(self):
         return '<PowerCommand {} {} {} {} {}>'.format(self.mode, self.type, self.input_format, self.output_format, self.module_type)

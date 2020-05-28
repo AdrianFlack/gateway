@@ -73,11 +73,24 @@ class GatewayApiTest(unittest.TestCase):
 
     def test_get_realtime_power_p1(self):
         self.power_controller.get_power_modules.return_value = {10: {'address': 11, 'version': P1_CONCENTRATOR}}
-        self.p1_controller.get_module_status.return_value = [0b00001011]
-        self.power_controller.get_module_current.return_value = ['001  002  !42  012  ']
-        self.power_controller.get_module_voltage.return_value = ['00001  002.3  !@#42  00012  ']
-        self.p1_controller.get_module_delivered_power.return_value = ['000002   000003   !@#$42   000010   ']
-        self.p1_controller.get_module_received_power.return_value = ['000001   000003   !@#$42   000012   ']
+        self.p1_controller.get_module_status.return_value = [
+                True, True, False, True,
+                False, False, False, False
+        ]
+        self.p1_controller.get_module_current.return_value = [
+            {'phase1': 1.0, 'phase2': 1.0, 'phase3': 1.0},
+            {'phase1': 2.0, 'phase2': 2.0, 'phase3': 2.0},
+            {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+            {'phase1': 12.0, 'phase2': 12.0, 'phase3': 12.0},
+        ]
+        self.p1_controller.get_module_voltage.return_value = [
+            {'phase1': 1.0, 'phase2': 1.0, 'phase3': 1.0},
+            {'phase1': 2.3, 'phase2': 2.3, 'phase3': 2.3},
+            {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+            {'phase1': 12.0, 'phase2': 12.0, 'phase3': 12.0},
+        ]
+        self.p1_controller.get_module_delivered_power.return_value = [2.0, 3.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0]
+        self.p1_controller.get_module_received_power.return_value = [1.0, 3.0, 0.0, 12.0, 0.0, 0.0, 0.0, 0.0]
         result = self.api.get_realtime_power()
         assert result == {
             '10': [
@@ -94,12 +107,30 @@ class GatewayApiTest(unittest.TestCase):
 
     def test_get_realtime_p1(self):
         self.power_controller.get_power_modules.return_value = {10: {'address': 11, 'version': P1_CONCENTRATOR}}
-        self.p1_controller.get_module_status.return_value = [0b00001011]
-        self.p1_controller.get_module_meter_electricity.return_value = ['11111111111111111111111111112222222222222222222222222222                            4444444444444444444444444444']
-        self.power_controller.get_module_current.return_value = ['001  002  !42  012  ']
-        self.power_controller.get_module_voltage.return_value = ['00001  002.3  !@#42  00012  ']
-        self.p1_controller.get_module_delivered_power.return_value = ['000002   000003   !@#$42   000010   ']
-        self.p1_controller.get_module_received_power.return_value = ['000001   000003   !@#$42   000012   ']
+        self.p1_controller.get_module_status.return_value = [
+                True, True, False, True,
+                False, False, False, False
+        ]
+        self.p1_controller.get_module_meter.return_value = [
+            '1111111111111111111111111111',
+            '2222222222222222222222222222',
+            '                            ',
+            '4444444444444444444444444444'
+        ]
+        self.p1_controller.get_module_current.return_value = [
+            {'phase1': 1.0, 'phase2': 1.0, 'phase3': 1.0},
+            {'phase1': 2.0, 'phase2': 2.0, 'phase3': 2.0},
+            {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+            {'phase1': 12.0, 'phase2': 12.0, 'phase3': 12.0},
+        ]
+        self.p1_controller.get_module_voltage.return_value = [
+            {'phase1': 1.0, 'phase2': 1.0, 'phase3': 1.0},
+            {'phase1': 2.3, 'phase2': 2.3, 'phase3': 2.3},
+            {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+            {'phase1': 12.0, 'phase2': 12.0, 'phase3': 12.0},
+        ]
+        self.p1_controller.get_module_delivered_power.return_value = [2.0, 3.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0]
+        self.p1_controller.get_module_received_power.return_value = [1.0, 3.0, 0.0, 12.0, 0.0, 0.0, 0.0, 0.0]
         result = self.api.get_realtime_p1()
         assert result == [
             {'module_id': 10,
@@ -137,7 +168,10 @@ class GatewayApiTest(unittest.TestCase):
 
     def test_get_total_energy_p1(self):
         self.power_controller.get_power_modules.return_value = {10: {'address': 11, 'version': P1_CONCENTRATOR}}
-        self.p1_controller.get_module_status.return_value = [0b00001011]
+        self.p1_controller.get_module_status.return_value = [
+                True, True, False, True,
+                False, False, False, False
+        ]
         self.power_controller.get_module_day_energy.return_value = ['000000.001    000000.002    !@#$%^&*42    000000.012    ']
         self.power_controller.get_module_night_energy.return_value = ['000000.002    000000.003    !@#$%^&*42    000000.024    ']
         result = self.api.get_total_energy()

@@ -810,27 +810,17 @@ class GatewayApi(object):
                     current = self.__power_controller.get_module_current(modules[module_id])
                     power = self.__power_controller.get_module_power(modules[module_id])
                 elif version == power_api.P1_CONCENTRATOR:
-                    status = self.__p1_controller.get_module_status(modules[module_id])[0]
-                    volt_buf = self.__power_controller.get_module_voltage(modules[module_id], phase=1)[0]  # TODO: Average?
-                    current_ph1_buf = self.__power_controller.get_module_current(modules[module_id], phase=1)[0]
-                    current_ph2_buf = self.__power_controller.get_module_current(modules[module_id], phase=2)[0]
-                    current_ph3_buf = self.__power_controller.get_module_current(modules[module_id], phase=3)[0]
-                    delivered_power = self.__p1_controller.get_module_delivered_power(modules[module_id])[0]
-                    received_power = self.__p1_controller.get_module_received_power(modules[module_id])[0]
-                    for port in range(num_ports):
+                    statuses = self.__p1_controller.get_module_status(modules[module_id])
+                    voltages = self.__p1_controller.get_module_voltage(modules[module_id])
+                    currents = self.__p1_controller.get_module_current(modules[module_id])
+                    delivered_power = self.__p1_controller.get_module_delivered_power(modules[module_id])
+                    received_power = self.__p1_controller.get_module_received_power(modules[module_id])
+                    for port, status in enumerate(statuses):
                         try:
-                            if status & 1 << port:
-                                volt[port] = float(volt_buf[port * 7:(port + 1) * 7][:5])
-                                power[port] = (float(delivered_power[port * 9:(port + 1) * 9][:6]) -
-                                               float(received_power[port * 9:(port + 1) * 9][:6])) * 1000
-                                current[port] = float(current_ph1_buf[port * 5:(port + 1) * 6][:3])
-                                try:
-                                    # Phase 2 and 3 might be available on 3-phase meters. If not, the data will be
-                                    # empty and generate a ValueError. In such case, ignore the exception and move on
-                                    current[port] += (float(current_ph2_buf[port * 5:(port + 1) * 6][:3]) +
-                                                      float(current_ph3_buf[port * 5:(port + 1) * 6][:3]))
-                                except ValueError:
-                                    pass
+                            if status:
+                                volt[port] = voltages[port]['phase1']
+                                power[port] = (delivered_power[port] - received_power[port]) * 1000
+                                current[port] = sum(currents[port].values())
                         except ValueError:
                             pass
                 else:
@@ -862,32 +852,21 @@ class GatewayApi(object):
         if self.__power_controller is None:
             return values
 
-        port_count = power_api.NUM_PORTS[power_api.P1_CONCENTRATOR]
         modules = self.__power_controller.get_power_modules()
         for module_id, module in sorted(modules.items()):
             if module['version'] == power_api.P1_CONCENTRATOR:
-                status = self.__p1_controller.get_module_status(modules[module_id])[0]
-                meter_electricity = self.__p1_controller.get_module_meter_electricity(modules[module_id])[0]
-                voltage_ph1_buf = self.__power_controller.get_module_voltage(modules[module_id], phase=1)[0]
-                voltage_ph2_buf = self.__power_controller.get_module_voltage(modules[module_id], phase=2)[0]
-                voltage_ph3_buf = self.__power_controller.get_module_voltage(modules[module_id], phase=3)[0]
-                current_ph1_buf = self.__power_controller.get_module_current(modules[module_id], phase=1)[0]
-                current_ph2_buf = self.__power_controller.get_module_current(modules[module_id], phase=2)[0]
-                current_ph3_buf = self.__power_controller.get_module_current(modules[module_id], phase=3)[0]
+                statuses = self.__p1_controller.get_module_status(modules[module_id])
+                meters = self.__p1_controller.get_module_meter(modules[module_id], type=1)
+                voltages = self.__p1_controller.get_module_voltage(modules[module_id])
+                currents = self.__p1_controller.get_module_current(modules[module_id])
 
-            for port_id in range(port_count):
-                if status & 1 << port_id:
-                    values.append({'module_id': module_id,
-                                   'port_id': port_id,
-                                   'meter': meter_electricity[port_id * 28:(port_id + 1) * 28],
-                                   'voltage':
-                                   {'phase1': float(voltage_ph1_buf[port_id * 7:(port_id + 1) * 7][:5]),
-                                    'phase2': float(voltage_ph2_buf[port_id * 7:(port_id + 1) * 7][:5]),
-                                    'phase3': float(voltage_ph3_buf[port_id * 7:(port_id + 1) * 7][:5])},
-                                   'current':
-                                   {'phase1': float(current_ph1_buf[port_id * 5:(port_id + 1) * 6][:3]),
-                                    'phase2': float(current_ph2_buf[port_id * 5:(port_id + 1) * 6][:3]),
-                                    'phase3': float(current_ph3_buf[port_id * 5:(port_id + 1) * 6][:3])}})
+                for port_id, status in enumerate(statuses):
+                    if status:
+                        values.append({'module_id': module_id,
+                                       'port_id': port_id,
+                                       'meter': meters[port_id],
+                                       'voltage': voltages[port_id],
+                                       'current': currents[port_id]})
 
         return values
 
@@ -915,12 +894,12 @@ class GatewayApi(object):
                     night = [convert_nan(entry, default=None)
                              for entry in self.__power_controller.get_module_night_energy(modules[module_id])]
                 elif version == power_api.P1_CONCENTRATOR:
-                    status = self.__p1_controller.get_module_status(modules[module_id])[0]
+                    statuses = self.__p1_controller.get_module_status(modules[module_id])
                     raw_day = self.__power_controller.get_module_day_energy(modules[module_id])[0]
                     raw_night = self.__power_controller.get_module_night_energy(modules[module_id])[0]
-                    for port in range(num_ports):
+                    for port, status in enumerate(statuses):
                         try:
-                            if status & 1 << port:
+                            if status:
                                 day[port] = int(float(raw_day[port * 14:(port + 1) * 14][:10]) * 1000)
                                 night[port] = int(float(raw_night[port * 14:(port + 1) * 14][:10]) * 1000)
                         except ValueError:

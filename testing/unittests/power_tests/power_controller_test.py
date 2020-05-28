@@ -38,7 +38,8 @@ class PowerControllerTest(unittest.TestCase):
 
     def __get_controller(self):
         """ Get a PowerController using FILE. """
-        SetUpTestInjections(power_db=':memory:')
+        SetUpTestInjections(power_communicator=mock.Mock(),
+                            power_db=':memory:')
         return PowerController()
 
     def test_empty(self):
@@ -181,18 +182,103 @@ class PowerP1Test(unittest.TestCase):
                             power_db=':memory:')
         self.controller = P1Controller()
 
-    def test_get_module_meter_electricity(self):
-        with mock.patch.object(self.power_communicator, 'do_command') as cmd:
-            self.controller.get_module_meter_electricity({'version': P1_CONCENTRATOR,
-                                                          'address': '11.0'})
+    def test_get_module_status(self):
+        payload = 0b00001011
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            status = self.controller.get_module_status({'version': P1_CONCENTRATOR,
+                                                       'address': '11.0'})
+            assert status == [
+                True, True, False, True,
+                False, False, False, False
+            ]
+            assert cmd.call_args_list == [
+                mock.call('11.0', PowerCommand('G', 'SP\x00', '', 'B', module_type='C'))
+            ]
+
+    def test_get_module_meter(self):
+        # TODO confirm this is correct
+        payload = '11111111111111111111111111112222222222222222222222222222                            4444444444444444444444444444'
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            meters = self.controller.get_module_meter({'version': P1_CONCENTRATOR,
+                                                       'address': '11.0'},
+                                                      type=1)
+            assert meters == [
+                '1111111111111111111111111111',
+                '2222222222222222222222222222',
+                '                            ',
+                '4444444444444444444444444444',
+                '', '', '', '',
+            ]
             assert cmd.call_args_list == [
                 mock.call('11.0', PowerCommand('G', 'M1\x00', '', '224s', module_type='C'))
             ]
 
-    def test_get_module_meter_gas(self):
-        with mock.patch.object(self.power_communicator, 'do_command') as cmd:
-            self.controller.get_module_meter_gas({'version': P1_CONCENTRATOR,
-                                                          'address': '11.0'})
+    def test_get_module_current(self):
+        payload = '001  002  !42  012  '
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            voltages = self.controller.get_module_current({'version': P1_CONCENTRATOR,
+                                                           'address': '11.0'})
+            assert voltages == [
+                {'phase1': 1.0, 'phase2': 1.0, 'phase3': 1.0},
+                {'phase1': 2.0, 'phase2': 2.0, 'phase3': 2.0},
+                {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+                {'phase1': 12.0, 'phase2': 12.0, 'phase3': 12.0},
+                {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+                {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+                {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+                {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0}
+            ]
+            self.assertIn(mock.call('11.0', PowerCommand('G', 'C1\x00', '', '40s', module_type='C')),
+                          cmd.call_args_list)
+            self.assertIn(mock.call('11.0', PowerCommand('G', 'C2\x00', '', '40s', module_type='C')),
+                          cmd.call_args_list)
+            self.assertIn(mock.call('11.0', PowerCommand('G', 'C3\x00', '', '40s', module_type='C')),
+                          cmd.call_args_list)
+
+    def test_get_module_voltage(self):
+        payload = '00001  002.3  !@#42  00012  '
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            voltages = self.controller.get_module_voltage({'version': P1_CONCENTRATOR,
+                                                           'address': '11.0'})
+            assert voltages == [
+                {'phase1': 1.0, 'phase2': 1.0, 'phase3': 1.0},
+                {'phase1': 2.3, 'phase2': 2.3, 'phase3': 2.3},
+                {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+                {'phase1': 12.0, 'phase2': 12.0, 'phase3': 12.0},
+                {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+                {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+                {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0},
+                {'phase1': 0.0, 'phase2': 0.0, 'phase3': 0.0}
+            ]
+            self.assertIn(mock.call('11.0', PowerCommand('G', 'V1\x00', '', '56s', module_type='C')),
+                          cmd.call_args_list)
+            self.assertIn(mock.call('11.0', PowerCommand('G', 'V2\x00', '', '56s', module_type='C')),
+                          cmd.call_args_list)
+            self.assertIn(mock.call('11.0', PowerCommand('G', 'V3\x00', '', '56s', module_type='C')),
+                          cmd.call_args_list)
+
+    def test_get_module_delivered_power(self):
+        payload = '000001   000002   !@#$42   000012   '
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            delivered = self.controller.get_module_delivered_power({'version': P1_CONCENTRATOR,
+                                                                    'address': '11.0'})
+            assert delivered == [1.0, 2.0, 0.0, 12.0, 0.0, 0.0, 0.0, 0.0]
             assert cmd.call_args_list == [
-                mock.call('11.0', PowerCommand('G', 'M2\x00', '', '224s', module_type='C'))
+                mock.call('11.0', PowerCommand('G', 'PD\x00', '', '72s', module_type='C')),
+            ]
+
+    def test_get_module_received_power(self):
+        payload = '000001   000002   !@#$42   000012   '
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            received = self.controller.get_module_received_power({'version': P1_CONCENTRATOR,
+                                                                  'address': '11.0'})
+            assert received == [1.0, 2.0, 0.0, 12.0, 0.0, 0.0, 0.0, 0.0]
+            assert cmd.call_args_list == [
+                mock.call('11.0', PowerCommand('G', 'PR\x00', '', '72s', module_type='C')),
             ]
