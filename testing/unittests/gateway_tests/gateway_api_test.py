@@ -92,6 +92,33 @@ class GatewayApiTest(unittest.TestCase):
             ]
         }
 
+    def test_get_realtime_p1(self):
+        self.power_controller.get_power_modules.return_value = {10: {'address': 11, 'version': P1_CONCENTRATOR}}
+        self.p1_controller.get_module_status.return_value = [0b00001011]
+        self.p1_controller.get_module_meter_electricity.return_value = ['11111111111111111111111111112222222222222222222222222222                            4444444444444444444444444444']
+        self.power_controller.get_module_current.return_value = ['001  002  !42  012  ']
+        self.power_controller.get_module_voltage.return_value = ['00001  002.3  !@#42  00012  ']
+        self.p1_controller.get_module_delivered_power.return_value = ['000002   000003   !@#$42   000010   ']
+        self.p1_controller.get_module_received_power.return_value = ['000001   000003   !@#$42   000012   ']
+        result = self.api.get_realtime_p1()
+        assert result == [
+            {'module_id': 10,
+             'port_id': 0,
+             'meter': '1111111111111111111111111111',
+             'current': {'phase1': 1.0, 'phase2': 1.0, 'phase3': 1.0},
+             'voltage': {'phase1': 1.0, 'phase2': 1.0, 'phase3': 1.0}},
+            {'module_id': 10,
+             'port_id': 1,
+             'meter': '2222222222222222222222222222',
+             'current': {'phase1': 2.0, 'phase2': 2.0, 'phase3': 2.0},
+             'voltage': {'phase1': 2.3, 'phase2': 2.3, 'phase3': 2.3}},
+            {'module_id': 10,
+             'port_id': 3,
+             'meter': '4444444444444444444444444444',
+             'current': {'phase1': 12.0, 'phase2': 12.0, 'phase3': 12.0},
+             'voltage': {'phase1': 12.0, 'phase2': 12.0, 'phase3': 12.0}},
+        ]
+
     def test_get_total_energy(self):
         self.power_controller.get_power_modules.return_value = {10: {'address': 11, 'version': POWER_MODULE}}
         self.power_controller.get_module_day_energy.return_value = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]

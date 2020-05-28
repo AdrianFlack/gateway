@@ -38,6 +38,7 @@ class MetricsCollectorTest(unittest.TestCase):
              'input7': ''}
         ]
         self.gateway_api.get_realtime_power.return_value = {}
+        self.gateway_api.get_realtime_p1.return_value = {}
         self.gateway_api.get_total_energy.return_value = {}
         SetUpTestInjections(gateway_api=self.gateway_api,
                             pulse_counter_controller=mock.Mock(),
@@ -55,6 +56,28 @@ class MetricsCollectorTest(unittest.TestCase):
                                       metric_type='energy',
                                       tags={'type': 'openmotics', 'id': '11.0', 'name': 'foo'},
                                       values={'current': 5.0, 'frequency': 2.1, 'power': 3.6, 'voltage': 10.0})
+            assert enqueue.call_args_list == [expected_call]
+
+    def test_realtime_p1_metrics(self):
+        self.gateway_api.get_realtime_p1.return_value = [
+            {'module_id': 10,
+             'port_id': 0,
+             'meter': '1111111111111111111111111111',
+             'voltage': {'phase1': 1.0, 'phase2': 2.0, 'phase3': 3.0},
+             'current': {'phase1': 1.1, 'phase2': 1.2, 'phase3': 1.3}},
+        ]
+        with mock.patch.object(self.controller, '_enqueue_metrics') as enqueue:
+            self.controller._run_power_metrics('energy')
+            expected_call = mock.call(timestamp=mock.ANY,
+                                      metric_type='energy_p1',
+                                      tags={'type': 'openmotics', 'id': '11.0',
+                                            'meter': '1111111111111111111111111111'},
+                                      values={'voltage_phase1': 1.0,
+                                              'voltage_phase2': 2.0,
+                                              'voltage_phase3': 3.0,
+                                              'current_phase1': 1.1,
+                                              'current_phase2': 1.2,
+                                              'current_phase3': 1.3})
             assert enqueue.call_args_list == [expected_call]
 
     def test_total_power_metrics(self):

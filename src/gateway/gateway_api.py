@@ -852,6 +852,45 @@ class GatewayApi(object):
 
         return output
 
+    # TODO: rework get_realtime_power or call this there.
+    def get_realtime_p1(self):
+        # type: () -> List[Dict[str,Any]]
+        """
+        Get the realtime p1 measurement values.
+        """
+        values = []
+        if self.__power_controller is None:
+            return values
+
+        port_count = power_api.NUM_PORTS[power_api.P1_CONCENTRATOR]
+        modules = self.__power_controller.get_power_modules()
+        for module_id, module in sorted(modules.items()):
+            if module['version'] == power_api.P1_CONCENTRATOR:
+                status = self.__p1_controller.get_module_status(modules[module_id])[0]
+                meter_electricity = self.__p1_controller.get_module_meter_electricity(modules[module_id])[0]
+                voltage_ph1_buf = self.__power_controller.get_module_voltage(modules[module_id], phase=1)[0]
+                voltage_ph2_buf = self.__power_controller.get_module_voltage(modules[module_id], phase=2)[0]
+                voltage_ph3_buf = self.__power_controller.get_module_voltage(modules[module_id], phase=3)[0]
+                current_ph1_buf = self.__power_controller.get_module_current(modules[module_id], phase=1)[0]
+                current_ph2_buf = self.__power_controller.get_module_current(modules[module_id], phase=2)[0]
+                current_ph3_buf = self.__power_controller.get_module_current(modules[module_id], phase=3)[0]
+
+            for port_id in range(port_count):
+                if status & 1 << port_id:
+                    values.append({'module_id': module_id,
+                                   'port_id': port_id,
+                                   'meter': meter_electricity[port_id * 28:(port_id + 1) * 28],
+                                   'voltage':
+                                   {'phase1': float(voltage_ph1_buf[port_id * 7:(port_id + 1) * 7][:5]),
+                                    'phase2': float(voltage_ph2_buf[port_id * 7:(port_id + 1) * 7][:5]),
+                                    'phase3': float(voltage_ph3_buf[port_id * 7:(port_id + 1) * 7][:5])},
+                                   'current':
+                                   {'phase1': float(current_ph1_buf[port_id * 5:(port_id + 1) * 6][:3]),
+                                    'phase2': float(current_ph2_buf[port_id * 5:(port_id + 1) * 6][:3]),
+                                    'phase3': float(current_ph3_buf[port_id * 5:(port_id + 1) * 6][:3])}})
+
+        return values
+
     def get_total_energy(self):
         # type: () -> Dict[str,List[List[Optional[float]]]]
         """ Get the total energy (kWh) consumed by the power modules.

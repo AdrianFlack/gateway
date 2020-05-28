@@ -663,6 +663,28 @@ class MetricsCollector(object):
         except Exception as ex:
             logger.exception('Error getting realtime power: {0}'.format(ex))
         try:
+            realtime_p1_data = self._gateway_api.get_realtime_p1()
+            for module_id, device_id in mapping.items():
+                for realtime_p1 in realtime_p1_data:
+                    if str(realtime_p1['module_id']) == module_id:
+                        self._enqueue_metrics(metric_type='energy_p1',
+                                              values={'voltage_phase1': realtime_p1['voltage']['phase1'],
+                                                      'voltage_phase2': realtime_p1['voltage']['phase2'],
+                                                      'voltage_phase3': realtime_p1['voltage']['phase3'],
+                                                      'current_phase1': realtime_p1['current']['phase1'],
+                                                      'current_phase2': realtime_p1['current']['phase2'],
+                                                      'current_phase3': realtime_p1['current']['phase3']},
+                                              tags={'type': 'openmotics',
+                                                    'id': device_id.format(realtime_p1['port_id']),
+                                                    'meter': realtime_p1['meter']},
+                                              timestamp=now)
+        except CommunicationTimedOutException:
+            logger.error('Error getting realtime power: CommunicationTimedOutException')
+        except InMaintenanceModeException:
+            logger.info('Error getting realtime power: InMaintenanceModeException')
+        except Exception as ex:
+            logger.exception('Error getting realtime power: {0}'.format(ex))
+        try:
             total_energy = self._gateway_api.get_total_energy()
             for module_id, device_id in mapping.items():
                 if module_id in total_energy:
@@ -1130,6 +1152,33 @@ class MetricsCollector(object):
                           'type': 'counter',
                           'policies': ['buffer'],
                           'unit': 'Wh'}]},
+            # energy_p1
+            {'type': 'energy_p1',
+             'tags': ['id', 'meter', 'type'],
+             'metrics': [{'name': 'voltage_phase1',
+                          'description': 'Current phase1 voltage',
+                          'type': 'gauge',
+                          'unit': 'V'},
+                         {'name': 'voltage_phase2',
+                          'description': 'Current phase2 voltage',
+                          'type': 'gauge',
+                          'unit': 'V'},
+                         {'name': 'voltage_phase3',
+                          'description': 'Current phase3 voltage',
+                          'type': 'gauge',
+                          'unit': 'V'},
+                         {'name': 'current_phase1',
+                          'description': 'Current phase1 current',
+                          'type': 'gauge',
+                          'unit': 'A'},
+                         {'name': 'current_phase2',
+                          'description': 'Current phase2 current',
+                          'type': 'gauge',
+                          'unit': 'A'},
+                         {'name': 'current_phase3',
+                          'description': 'Current phase3 current',
+                          'type': 'gauge',
+                          'unit': 'A'}]},
             # energy_analytics
             {'type': 'energy_analytics',
              'tags': ['id', 'name', 'type'],
