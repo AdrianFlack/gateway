@@ -848,37 +848,11 @@ class GatewayApi(object):
         """
         Get the realtime p1 measurement values.
         """
-        values = []
         if self.__power_controller is None:
-            return values
+            return []
 
         modules = self.__power_controller.get_power_modules()
-        for module_id, module in sorted(modules.items()):
-            if module['version'] == power_api.P1_CONCENTRATOR:
-                statuses = self.__p1_controller.get_module_status(modules[module_id])
-                meters = self.__p1_controller.get_module_meter(modules[module_id], type=1)
-                tariffs1 = self.__p1_controller.get_module_injection_tariff(modules[module_id], type=1)
-                tariffs2 = self.__p1_controller.get_module_injection_tariff(modules[module_id], type=2)
-                tariff_indicators = self.__p1_controller.get_module_tariff_indicator(modules[module_id])
-                timestamps = self.__p1_controller.get_module_timestamp(modules[module_id])
-                gasses = self.__p1_controller.get_module_consumption_gas(modules[module_id])
-                voltages = self.__p1_controller.get_module_voltage(modules[module_id])
-                currents = self.__p1_controller.get_module_current(modules[module_id])
-
-                for port_id, status in enumerate(statuses):
-                    if status:
-                        values.append({'module_id': module_id,
-                                       'port_id': port_id,
-                                       'meter': meters[port_id],
-                                       'timestamp': timestamps[port_id],
-                                       'gas': gasses[port_id],
-                                       'tariff': {'tariff1': tariffs1[port_id],
-                                                  'tariff2': tariffs2[port_id],
-                                                  'indicator': tariff_indicators[port_id]},
-                                       'voltage': voltages[port_id],
-                                       'current': currents[port_id]})
-
-        return values
+        return self.__p1_controller.get_realtime(modules)
 
     def get_total_energy(self):
         # type: () -> Dict[str,List[List[Optional[float]]]]
