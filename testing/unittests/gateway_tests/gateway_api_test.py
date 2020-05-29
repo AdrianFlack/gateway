@@ -172,8 +172,8 @@ class GatewayApiTest(unittest.TestCase):
                 True, True, False, True,
                 False, False, False, False
         ]
-        self.power_controller.get_module_day_energy.return_value = ['000000.001    000000.002    !@#$%^&*42    000000.012    ']
-        self.power_controller.get_module_night_energy.return_value = ['000000.002    000000.003    !@#$%^&*42    000000.024    ']
+        self.p1_controller.get_module_day_energy.return_value = [0.001, 0.002, 0.0, 0.012, 0.0, 0.0, 0.0, 0.0]
+        self.p1_controller.get_module_night_energy.return_value = [0.002, 0.003, 0.0, 0.024, 0.0, 0.0, 0.0, 0.0]
         result = self.api.get_total_energy()
         assert result == {
             '10': [[1, 2],

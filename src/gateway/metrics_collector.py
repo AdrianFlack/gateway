@@ -34,7 +34,7 @@ from power import power_api
 from serial_utils import CommunicationTimedOutException
 
 if False:  # MYPY
-    from typing import Callable, Dict, Any, List, Optional, Tuple
+    from typing import Dict, Any, List, Tuple
     from gateway.input_controller import InputController
     from gateway.output_controller import OutputController
     from gateway.sensor_controller import SensorController

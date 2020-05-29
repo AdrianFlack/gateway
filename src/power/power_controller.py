@@ -118,16 +118,20 @@ class PowerController(object):
         return self._power_communicator.do_command(module['address'], cmd)
 
     def get_module_day_energy(self, module):
-        # type: (Dict[str,Any]) -> List[Any]
-        # TODO return type depends on module version, translate here?
-        cmd = power_api.get_day_energy(module['version'])
-        return self._power_communicator.do_command(module['address'], cmd)
+        # type: (Dict[str,Any]) -> List[float]
+        if module['version'] == P1_CONCENTRATOR:
+            raise ValueError("Unknown power api version")
+        else:
+            cmd = power_api.get_day_energy(module['version'])
+            return self._power_communicator.do_command(module['address'], cmd)
 
     def get_module_night_energy(self, module):
-        # type: (Dict[str,Any]) -> List[Any]
-        # TODO return type depends on module version, translate here?
-        cmd = power_api.get_night_energy(module['version'])
-        return self._power_communicator.do_command(module['address'], cmd)
+        # type: (Dict[str,Any]) -> List[float]
+        if module['version'] == P1_CONCENTRATOR:
+            raise ValueError("Unknown power api version")
+        else:
+            cmd = power_api.get_night_energy(module['version'])
+            return self._power_communicator.do_command(module['address'], cmd)
 
     def get_power_modules(self):
         """
@@ -318,3 +322,29 @@ class P1Controller(object):
             except ValueError:
                 received.append(0.0)
         return received
+
+    def get_module_day_energy(self, module):
+        # type: (Dict[str,Any]) -> List[float]
+        cmd = power_api.get_day_energy(module['version'])
+        payload = self._power_communicator.do_command(module['address'], cmd)[0]
+
+        energy = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            try:
+                energy.append(float(payload[port_id * 14:(port_id + 1) * 14][:10]))
+            except ValueError:
+                energy.append(0.0)
+        return energy
+
+    def get_module_night_energy(self, module):
+        # type: (Dict[str,Any]) -> List[float]
+        cmd = power_api.get_night_energy(module['version'])
+        payload = self._power_communicator.do_command(module['address'], cmd)[0]
+
+        energy = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            try:
+                energy.append(float(payload[port_id * 14:(port_id + 1) * 14][:10]))
+            except ValueError:
+                energy.append(0.0)
+        return energy

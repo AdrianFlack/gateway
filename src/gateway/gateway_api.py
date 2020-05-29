@@ -895,13 +895,13 @@ class GatewayApi(object):
                              for entry in self.__power_controller.get_module_night_energy(modules[module_id])]
                 elif version == power_api.P1_CONCENTRATOR:
                     statuses = self.__p1_controller.get_module_status(modules[module_id])
-                    raw_day = self.__power_controller.get_module_day_energy(modules[module_id])[0]
-                    raw_night = self.__power_controller.get_module_night_energy(modules[module_id])[0]
+                    days = self.__p1_controller.get_module_day_energy(modules[module_id])
+                    nights = self.__p1_controller.get_module_night_energy(modules[module_id])
                     for port, status in enumerate(statuses):
                         try:
                             if status:
-                                day[port] = int(float(raw_day[port * 14:(port + 1) * 14][:10]) * 1000)
-                                night[port] = int(float(raw_night[port * 14:(port + 1) * 14][:10]) * 1000)
+                                day[port] = int(days[port] * 1000)
+                                night[port] = int(nights[port] * 1000)
                         except ValueError:
                             pass
                 else:

@@ -282,3 +282,25 @@ class PowerP1Test(unittest.TestCase):
             assert cmd.call_args_list == [
                 mock.call('11.0', PowerCommand('G', 'PR\x00', '', '72s', module_type='C')),
             ]
+
+    def test_get_module_day_energy(self):
+        payload = '000000.001    000000.002    !@#$%^&*42    000000.012    '
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            received = self.controller.get_module_day_energy({'version': P1_CONCENTRATOR,
+                                                              'address': '11.0'})
+            assert received == [0.001, 0.002, 0.0, 0.012, 0.0, 0.0, 0.0, 0.0]
+            assert cmd.call_args_list == [
+                mock.call('11.0', PowerCommand('G', 'c1\x00', '', '112s', module_type='C')),
+            ]
+
+    def test_get_module_night_energy(self):
+        payload = '000000.001    000000.002    !@#$%^&*42    000000.012    '
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            received = self.controller.get_module_night_energy({'version': P1_CONCENTRATOR,
+                                                                'address': '11.0'})
+            assert received == [0.001, 0.002, 0.0, 0.012, 0.0, 0.0, 0.0, 0.0]
+            assert cmd.call_args_list == [
+                mock.call('11.0', PowerCommand('G', 'c2\x00', '', '112s', module_type='C')),
+            ]
