@@ -215,6 +215,67 @@ class PowerP1Test(unittest.TestCase):
                 mock.call('11.0', PowerCommand('G', 'M1\x00', '', '224s', module_type='C'))
             ]
 
+    def test_get_module_timestamp(self):
+        # TODO confirm this is correct
+        payload = '000000000001S000000000002              000000000012S'
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            meters = self.controller.get_module_timestamp({'version': P1_CONCENTRATOR,
+                                                           'address': '11.0'})
+            assert meters == [
+                1.0, 2.0, 0.0, 12.0,
+                0.0, 0.0, 0.0, 0.0,
+            ]
+            assert cmd.call_args_list == [
+                mock.call('11.0', PowerCommand('G', 'TS\x00', '', '104s', module_type='C'))
+            ]
+
+    def test_get_module_gas(self):
+        # TODO confirm this is correct
+        payload = '000000001*m300002.300*m3            00012.000*m3'
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            meters = self.controller.get_module_consumption_gas({'version': P1_CONCENTRATOR,
+                                                                 'address': '11.0'})
+            assert meters == [
+                1.0, 2.3, 0.0, 12.0,
+                0.0, 0.0, 0.0, 0.0,
+            ]
+            assert cmd.call_args_list == [
+                mock.call('11.0', PowerCommand('G', 'cG\x00', '', '96s', module_type='C'))
+            ]
+
+    def test_get_module_injection_tariff(self):
+        # TODO confirm this is correct
+        payload = '0000000001*kWh000002.300*kWh              000012.000*kWh'
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            meters = self.controller.get_module_injection_tariff({'version': P1_CONCENTRATOR,
+                                                                  'address': '11.0'},
+                                                                 type=1)
+            assert meters == [
+                1.0, 2.3, 0.0, 12.0,
+                0.0, 0.0, 0.0, 0.0,
+            ]
+            assert cmd.call_args_list == [
+                mock.call('11.0', PowerCommand('G', 'i1\x00', '', '112s', module_type='C'))
+            ]
+
+    def test_get_module_tariff_indicator(self):
+        # TODO confirm this is correct
+        payload = '00010002    0012'
+        with mock.patch.object(self.power_communicator, 'do_command',
+                               return_value=[payload]) as cmd:
+            meters = self.controller.get_module_tariff_indicator({'version': P1_CONCENTRATOR,
+                                                                  'address': '11.0'})
+            assert meters == [
+                1.0, 2.0, 0.0, 12.0,
+                0.0, 0.0, 0.0, 0.0,
+            ]
+            assert cmd.call_args_list == [
+                mock.call('11.0', PowerCommand('G', 'ti\x00', '', '32s', module_type='C'))
+            ]
+
     def test_get_module_current(self):
         payload = '001  002  !42  012  '
         with mock.patch.object(self.power_communicator, 'do_command',

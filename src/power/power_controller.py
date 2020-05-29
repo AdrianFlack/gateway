@@ -255,8 +255,72 @@ class P1Controller(object):
             meters.append(payload[port_id * 28:(port_id + 1) * 28])
         return meters
 
-    def get_module_current(self, module, type=1):
-        # type: (Dict[str,Any], int) -> List[Dict[str,float]]
+    def get_module_timestamp(self, module):
+        # type: (Dict[str,Any]) -> List[float]
+        """
+        Request timestamps for all meters and parse repsonse.
+        """
+        cmd = power_api.get_timestamp_p1(module['version'])
+        payload = self._power_communicator.do_command(module['address'], cmd)[0]
+
+        timestamps = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            try:
+                timestamps.append(float(payload[port_id * 13:(port_id + 1) * 13][:12]))
+            except ValueError:
+                timestamps.append(0.0)
+        return timestamps
+
+    def get_module_consumption_gas(self, module):
+        # type: (Dict[str,Any]) -> List[float]
+        """
+        Request gas consumptions for all meters and parse repsonse.
+        """
+        cmd = power_api.get_consumption_gas_p1(module['version'])
+        payload = self._power_communicator.do_command(module['address'], cmd)[0]
+
+        consumptions = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            try:
+                consumptions.append(float(payload[port_id * 12:(port_id + 1) * 12][:9]))
+            except ValueError:
+                consumptions.append(0.0)
+        return consumptions
+
+    def get_module_injection_tariff(self, module, type=None):
+        # type: (Dict[str,Any], int) -> List[float]
+        """
+        Request consumption tariff for all meters and parse repsonse.
+        """
+        cmd = power_api.get_injection_tariff_p1(module['version'], type=type)
+        payload = self._power_communicator.do_command(module['address'], cmd)[0]
+
+        consumptions = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            try:
+                consumptions.append(float(payload[port_id * 14:(port_id + 1) * 14][:10]))
+            except ValueError:
+                consumptions.append(0.0)
+        return consumptions
+
+    def get_module_tariff_indicator(self, module):
+        # type: (Dict[str,Any]) -> List[float]
+        """
+        Request tariff indicator for all meters and parse repsonse.
+        """
+        cmd = power_api.get_tariff_indicator_p1(module['version'])
+        payload = self._power_communicator.do_command(module['address'], cmd)[0]
+
+        consumptions = []
+        for port_id in range(NUM_PORTS[P1_CONCENTRATOR]):
+            try:
+                consumptions.append(float(payload[port_id * 4:(port_id + 1) * 4]))
+            except ValueError:
+                consumptions.append(0.0)
+        return consumptions
+
+    def get_module_current(self, module):
+        # type: (Dict[str,Any]) -> List[Dict[str,float]]
         """
         Request phase voltages for all meters and parse repsonse.
         """
@@ -276,8 +340,8 @@ class P1Controller(object):
             currents.append(phases)
         return currents
 
-    def get_module_voltage(self, module, type=1):
-        # type: (Dict[str,Any], int) -> List[Dict[str,float]]
+    def get_module_voltage(self, module):
+        # type: (Dict[str,Any]) -> List[Dict[str,float]]
         """
         Request phase voltages for all meters and parse repsonse.
         """
